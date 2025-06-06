@@ -55,9 +55,9 @@ El Reloj Bomba
 
   const enviar = async () => {
     const payload = {
-      frase: texto,
-      tipoJuego,
-      fecha: new Date().toISOString(),
+      "Marca temporal": new Date().toISOString(),
+      "¿Para que tipo de minijuego va?": tipoJuego,
+      "Escribe tu frase": texto,
     };
 
     try {
@@ -66,7 +66,8 @@ El Reloj Bomba
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      alert(res.ok ? 'Frase enviada con éxito' : 'Error al enviar');
+      const resultado = await res.text();
+      alert(res.ok ? 'Frase enviada con éxito' : `Error al enviar: ${resultado}`);
     } catch (err) {
       console.error(err);
       alert('Error de red');
