@@ -3,6 +3,11 @@ import { useState, useRef } from 'react';
 export default function FraseEditor() {
   const [texto, setTexto] = useState('');
   const [tipoJuego, setTipoJuego] = useState('');
+  const tiposConJugadores = [
+    '¡El Primero Que!',
+    'El Reloj Bomba',
+    '¿Quién crees que es mas probable que…?',
+  ];
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const insertarMarcador = (marcador: string) => {
@@ -19,10 +24,27 @@ export default function FraseEditor() {
   };
 
   const mostrarEjemplosTipoJuego = () => {
-    alert(`Ejemplos:
+    alert(`Ejemplos por tipo de juego:
+
+¡El Primero Que!
 - El primero que toque algo rojo.
+- El primero que se ponga de pie.
+
+Todos los que…
 - Todos los que han viajado este año.
-- ¿Quién es más probable que se quede dormido en una fiesta?`);
+- Todos los que han llorado viendo una peli.
+
+En 7 segundos
+- Haz 5 sentadillas.
+- Di 3 canciones de reggaetón.
+
+¿Quién crees que es más probable que…?
+- ¿Quién es más probable que se quede dormido en una fiesta?
+- ¿Quién es más probable que mande un mensaje a su ex?
+
+El Reloj Bomba
+- Di un color y toca algo de ese color.
+- Haz una pregunta absurda a alguien.`);
   };
 
   const mostrarEjemplosJugadores = () => {
@@ -39,7 +61,7 @@ export default function FraseEditor() {
     };
 
     try {
-      const res = await fetch('https://sheet.best/api/sheets/YOUR_SHEET_ID', {
+      const res = await fetch('https://api.sheetbest.com/sheets/e618ed34-13c6-4113-ac4e-5c4278ee1fcc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -58,14 +80,15 @@ export default function FraseEditor() {
 
         {/* Tipo de juego */}
         <div style={{ marginBottom: '1rem' }}>
-          <label>Tipo de juego</label>
+          <label>Elige el tipo de juego</label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
             {[
               '¡El Primero Que!',
-              'Todos los que…',
-              'Challenge en 7 segundos',
-              '¿Quién es más probable que…?',
               'El Reloj Bomba',
+              'En 7 segundos',
+              'Todos los que…',
+              '¿Quién crees que es mas probable que…?',
+              
             ].map((opcion) => (
               <button
                 key={opcion}
@@ -95,11 +118,13 @@ export default function FraseEditor() {
             onChange={(e) => setTexto(e.target.value)}
             style={{ width: '100%', height: 100, marginTop: 4 }}
           />
-          <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <button onClick={() => insertarMarcador('{Jugador1}')}>+ Jugador 1</button>
-            <button onClick={() => insertarMarcador('{Jugador2}')}>+ Jugador 2</button>
-            <button onClick={mostrarEjemplosJugadores} style={btnInfoStyle}>?</button>
-          </div>
+          {tiposConJugadores.includes(tipoJuego) && (
+            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button onClick={() => insertarMarcador('{Jugador1}')}>+ Jugador 1</button>
+              <button onClick={() => insertarMarcador('{Jugador2}')}>+ Jugador 2</button>
+              <button onClick={mostrarEjemplosJugadores} style={btnInfoStyle}>?</button>
+            </div>
+          )}
         </div>
 
         {/* Enviar */}
