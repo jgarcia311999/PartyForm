@@ -1,4 +1,3 @@
-import * as React from 'react';
 import FraseEditor from './components/FraseEditor';
 
 function App() {
