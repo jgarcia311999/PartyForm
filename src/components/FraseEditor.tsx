@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 export default function FraseEditor() {
   const [texto, setTexto] = useState('');
   const [tipoJuego, setTipoJuego] = useState('');
-  const [opcionesColapsadas, setOpcionesColapsadas] = useState(false);
+  const [pantalla, setPantalla] = useState<'seleccion' | 'frase'>('seleccion');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalContent, setModalContent] = useState<string[]>([]);
@@ -82,73 +82,87 @@ export default function FraseEditor() {
 
         {/* Tipo de juego */}
         <div style={{ marginBottom: '1rem' }}>
-          <label>Elige el tipo de juego</label>
-          {opcionesColapsadas && (
-            <div style={{ marginBottom: '0.5rem' }}>
-              <button onClick={() => setOpcionesColapsadas(false)} style={{ cursor: 'pointer' }}>⬅ Mostrar todas</button>
-            </div>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-            {[
-              '¡El Primero Que!',
-              'El Reloj Bomba',
-              'En 7 segundos',
-              'Todos los que…',
-              '¿Quién es mas probable que…?',
-            ]
-              .filter((opcion) => !opcionesColapsadas || opcion === tipoJuego)
-              .map((opcion) => (
-                <div key={opcion} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => {
-                      setTipoJuego(opcion);
-                      setOpcionesColapsadas(true);
-                    }}
+          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>¿Qué tipo de minijuego quieres crear?</label>
+          <div
+            style={{
+              transition: 'all 0.4s ease',
+              opacity: pantalla === 'seleccion' ? 1 : 0,
+              height: pantalla === 'seleccion' ? 'auto' : 0,
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {['¡El Primero Que!', 'El Reloj Bomba', 'En 7 segundos', 'Todos los que…', '¿Quién es mas probable que…?']
+                .map((opcion) => (
+                  <div
+                    key={opcion}
+                    onClick={() => setTipoJuego(opcion)}
                     style={{
-                      flex: 1,
-                      padding: '6px 12px',
-                      borderRadius: '20px',
-                      border: tipoJuego === opcion ? '2px solid #0070f3' : '1px solid #ccc',
-                      backgroundColor: tipoJuego === opcion ? '#e0f0ff' : '#fff',
-                      color: tipoJuego === opcion ? '#0070f3' : '#000',
+                      border: tipoJuego === opcion ? '2px solid #0070f3' : '1px solid #ddd',
+                      borderRadius: '10px',
+                      padding: '1rem',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                      backgroundColor: tipoJuego === opcion ? '#eaf6ff' : '#fff',
+                      color: '#333',
                       cursor: 'pointer',
-                      textAlign: 'left',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
                   >
-                    {opcion}
-                  </button>
-                  <button onClick={() => mostrarEjemplosTipoJuego(opcion)} style={btnInfoStyle}>?</button>
-                </div>
-              ))}
+                    <span>{opcion}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        mostrarEjemplosTipoJuego(opcion);
+                      }}
+                      style={btnInfoStyle}
+                    >
+                      ?
+                    </button>
+                  </div>
+                ))}
+            </div>
+            {tipoJuego && (
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <button onClick={() => setPantalla('frase')}>Siguiente</button>
+              </div>
+            )}
           </div>
+          {pantalla === 'frase' && (
+            <div
+              style={{
+                transition: 'all 0.4s ease',
+                opacity: pantalla === 'frase' ? 1 : 0,
+                height: pantalla === 'frase' ? 'auto' : 0,
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                <button onClick={() => setPantalla('seleccion')}>⬅ Atrás</button>
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label>Frase</label>
+                <textarea
+                  ref={textAreaRef}
+                  value={texto}
+                  onChange={(e) => setTexto(e.target.value)}
+                  style={{ width: '100%', height: 100, marginTop: 4 }}
+                />
+                {tiposConJugadores.includes(tipoJuego) && (
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button onClick={() => insertarMarcador('{Jugador1}')}>+ Jugador 1</button>
+                    <button onClick={() => insertarMarcador('{Jugador2}')}>+ Jugador 2</button>
+                    <button onClick={mostrarEjemplosJugadores} style={btnInfoStyle}>?</button>
+                  </div>
+                )}
+              </div>
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <button onClick={enviar}>Enviar frase</button>
+              </div>
+            </div>
+          )}
         </div>
-
-        {tipoJuego && (
-          <>
-            {/* Frase */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label>Frase</label>
-              <textarea
-                ref={textAreaRef}
-                value={texto}
-                onChange={(e) => setTexto(e.target.value)}
-                style={{ width: '100%', height: 100, marginTop: 4 }}
-              />
-              {tiposConJugadores.includes(tipoJuego) && (
-                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <button onClick={() => insertarMarcador('{Jugador1}')}>+ Jugador 1</button>
-                  <button onClick={() => insertarMarcador('{Jugador2}')}>+ Jugador 2</button>
-                  <button onClick={mostrarEjemplosJugadores} style={btnInfoStyle}>?</button>
-                </div>
-              )}
-            </div>
-
-            {/* Enviar */}
-            <div style={{ marginTop: '1rem' }}>
-              <button onClick={enviar}>Enviar frase</button>
-            </div>
-          </>
-        )}
       </div>
       <Modal
         visible={modalVisible}
