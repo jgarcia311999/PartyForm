@@ -110,8 +110,8 @@ export default function FraseEditor() {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100vh',
-        width: '100vw',
+        height: '100dvh',
+        width: '100dvw',
         overflow: 'hidden',
         boxSizing: 'border-box',
         paddingTop: '2vh',
@@ -122,24 +122,32 @@ export default function FraseEditor() {
       <div
         style={{
           backgroundColor: '#fff',
-          borderRadius: '20px',
-          width: '95%',
-          maxWidth: 400,
-          padding: '3rem 2rem',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          borderRadius: 0,
+          width: '100%',
+          height: '100%',
+          padding: '1rem',
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
           textAlign: 'center',
           color: '#000',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <div
           style={{
             backgroundColor: '#FFD700',
-            padding: '2.5rem 1rem 2rem 1rem',
-            borderTopLeftRadius: '20px',
-            borderTopRightRadius: '20px',
+            padding: '2.5rem 0rem 2rem 0rem',
             borderBottomLeftRadius: '30px',
             borderBottomRightRadius: '30px',
-            margin: '-2rem -2rem 2rem -2rem',
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: 10,
             color: '#000',
             textAlign: 'center',
           }}
@@ -169,7 +177,6 @@ export default function FraseEditor() {
             }}
           >
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ fontSize: '16px', lineHeight: '20px' }}>Frase</label>
               <div
                 ref={textAreaRef}
                 contentEditable
