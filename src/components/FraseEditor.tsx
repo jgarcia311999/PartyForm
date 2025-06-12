@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 export default function FraseEditor() {
   const [texto, setTexto] = useState('');
   const [tipoJuego, setTipoJuego] = useState('');
-  const [pantalla, setPantalla] = useState<'seleccion' | 'frase'>('seleccion');
+  const [pantalla, setPantalla] = useState<'seleccion' | 'frase'>('frase');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalContent, setModalContent] = useState<string[]>([]);
@@ -12,19 +12,52 @@ export default function FraseEditor() {
     'El Reloj Bomba',
     '¿Quién crees que es mas probable que…?',
   ];
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const textAreaRef = useRef<HTMLDivElement>(null);
 
   const insertarMarcador = (marcador: string) => {
     const el = textAreaRef.current;
     if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const nuevoTexto = texto.slice(0, start) + marcador + texto.slice(end);
-    setTexto(nuevoTexto);
-    setTimeout(() => {
-      el.focus();
-      el.selectionStart = el.selectionEnd = start + marcador.length;
-    }, 0);
+
+    if (marcador === '{Jugador}') {
+      const marcadorHTML = ` <span contenteditable="false" style="background:#FFD700; color:#000; padding:2px 6px; border-radius:8px; margin:0 2px; display:inline-block;">Jugador</span> `;
+      // Insert HTML at cursor position in contenteditable div
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+
+      const tempEl = document.createElement('div');
+      tempEl.innerHTML = marcadorHTML;
+      const frag = document.createDocumentFragment();
+      let node;
+      while ((node = tempEl.firstChild)) {
+        frag.appendChild(node);
+      }
+      range.insertNode(frag);
+
+      // Move cursor after inserted node
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      // Update state with new innerHTML
+      setTexto(el.innerHTML);
+    } else {
+      // For other markers, insert plain text
+      const selection = window.getSelection();
+      if (!selection || !selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      const textNode = document.createTextNode(marcador);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      setTexto(el.innerHTML);
+    }
+    el.focus();
   };
 
   const mostrarEjemplosTipoJuego = (tipo: string) => {
@@ -48,10 +81,17 @@ export default function FraseEditor() {
   };
 
   const enviar = async () => {
+    // Convert innerHTML to plain text, removing HTML tags
+    const el = textAreaRef.current;
+    let textoPlano = texto;
+    if (el) {
+      textoPlano = el.innerText || el.textContent || texto;
+    }
+
     const payload = {
       "Marca temporal": new Date().toISOString(),
       "¿Para que tipo de minijuego va?": tipoJuego,
-      "Escribe tu frase": texto,
+      "Escribe tu frase": textoPlano,
     };
 
     try {
@@ -72,17 +112,112 @@ export default function FraseEditor() {
     <div
       style={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '100vh',
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+        paddingTop: '5vh',
+        padding: 8,
+        backgroundColor: '#f2f2f2',
       }}
     >
-      <div style={{ padding: 20, maxWidth: 600, width: '100%' }}>
-        <h1>Crear nueva frase</h1>
+      <div
+        style={{
+          backgroundColor: '#fff',
+          borderRadius: '20px',
+          width: '95%',
+          maxWidth: 400,
+          padding: '2.5rem 1.5rem',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          textAlign: 'center',
+          color: '#000',
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: '#FFD700',
+            padding: '2rem 1rem',
+            borderTopLeftRadius: '20px',
+            borderTopRightRadius: '20px',
+            borderBottomLeftRadius: '30px',
+            borderBottomRightRadius: '30px',
+            margin: '-2rem -2rem 2rem -2rem',
+            color: '#000',
+            textAlign: 'center',
+          }}
+        >
+          <h1 style={{
+            fontSize: '28px',
+            margin: 0,
+            fontWeight: 'bold',
+            letterSpacing: '-0.5px',
+          }}>
+            Crear nueva frase
+          </h1>
+          <p style={{ marginTop: '0.75rem', fontSize: '16px', opacity: 0.85 }}>
+            Comparte tu creatividad
+          </p>
+        </div>
 
-        {/* Tipo de juego */}
+        {/* Pantalla frase */}
+        {pantalla === 'frase' && (
+          <div
+            style={{
+              transition: 'all 0.4s ease',
+              opacity: pantalla === 'frase' ? 1 : 0,
+              height: pantalla === 'frase' ? 'auto' : 0,
+              overflow: 'hidden',
+              marginBottom: '1rem',
+            }}
+          >
+            <div style={{ marginBottom: '1rem' }}>
+              {pantalla === 'frase' && tiposConJugadores.includes(tipoJuego) && (
+                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button onClick={() => insertarMarcador('{Jugador1}')} style={{ fontSize: 14, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>+ Jugador 1</button>
+                  <button onClick={() => insertarMarcador('{Jugador2}')} style={{ fontSize: 14, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>+ Jugador 2</button>
+                  <button onClick={mostrarEjemplosJugadores} style={{ ...btnInfoStyle, fontSize: 14, padding: '8px 12px', borderRadius: '6px', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>?</button>
+                </div>
+              )}
+              <label style={{ fontSize: '16px', lineHeight: '20px' }}>Frase</label>
+              <div
+                ref={textAreaRef}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={(e) => setTexto(e.currentTarget.innerHTML)}
+                style={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  margin: 0,
+                  height: 100,
+                  marginTop: 8,
+                  fontSize: 16,
+                  lineHeight: '24px',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f5f5f5',
+                  color: '#000',
+                  overflowY: 'auto',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ marginTop: '1rem', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button onClick={enviar} disabled={!tipoJuego || texto.trim() === ''} style={{ padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none', minWidth: 120 }}>Enviar frase</button>
+              <button onClick={() => insertarMarcador('{Jugador}')} style={{ marginLeft: '0.5rem', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none', minWidth: 120 }}>+ Jugador</button>
+            </div>
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <button onClick={() => setPantalla('seleccion')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>Cambiar tipo de frase</button>
+            </div>
+          </div>
+        )}
+
+        {/* Pantalla seleccion */}
         <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>¿Qué tipo de minijuego quieres crear?</label>
           <div
             style={{
               transition: 'all 0.4s ease',
@@ -96,18 +231,23 @@ export default function FraseEditor() {
                 .map((opcion) => (
                   <div
                     key={opcion}
-                    onClick={() => setTipoJuego(opcion)}
+                    onClick={() => {
+                      setTipoJuego(opcion);
+                      setPantalla('frase');
+                    }}
                     style={{
-                      border: tipoJuego === opcion ? '2px solid #0070f3' : '1px solid #ddd',
-                      borderRadius: '10px',
-                      padding: '1rem',
+                      border: tipoJuego === opcion ? '2px solid #FFD700' : '1px solid #ddd',
+                      borderRadius: '12px',
+                      padding: '0.75rem',
                       boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                      backgroundColor: tipoJuego === opcion ? '#eaf6ff' : '#fff',
+                      backgroundColor: tipoJuego === opcion ? '#fff8b3' : '#fff',
                       color: '#333',
                       cursor: 'pointer',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      fontSize: '16px',
+                      lineHeight: '20px',
                     }}
                   >
                     <span>{opcion}</span>
@@ -116,7 +256,7 @@ export default function FraseEditor() {
                         e.stopPropagation();
                         mostrarEjemplosTipoJuego(opcion);
                       }}
-                      style={btnInfoStyle}
+                      style={{ ...btnInfoStyle, backgroundColor: '#FFD700', color: '#000', border: 'none' }}
                     >
                       ?
                     </button>
@@ -125,41 +265,13 @@ export default function FraseEditor() {
             </div>
             {tipoJuego && (
               <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button onClick={() => setPantalla('frase')}>Siguiente</button>
+                <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>Siguiente</button>
               </div>
             )}
           </div>
-          {pantalla === 'frase' && (
-            <div
-              style={{
-                transition: 'all 0.4s ease',
-                opacity: pantalla === 'frase' ? 1 : 0,
-                height: pantalla === 'frase' ? 'auto' : 0,
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                <button onClick={() => setPantalla('seleccion')}>⬅ Atrás</button>
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label>Frase</label>
-                <textarea
-                  ref={textAreaRef}
-                  value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
-                  style={{ width: '100%', height: 100, marginTop: 4 }}
-                />
-                {tiposConJugadores.includes(tipoJuego) && (
-                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <button onClick={() => insertarMarcador('{Jugador1}')}>+ Jugador 1</button>
-                    <button onClick={() => insertarMarcador('{Jugador2}')}>+ Jugador 2</button>
-                    <button onClick={mostrarEjemplosJugadores} style={btnInfoStyle}>?</button>
-                  </div>
-                )}
-              </div>
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button onClick={enviar}>Enviar frase</button>
-              </div>
+          {pantalla === 'seleccion' && (
+            <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
+              <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>⬅ Atrás</button>
             </div>
           )}
         </div>
@@ -217,10 +329,11 @@ const modalContent = {
   backgroundColor: '#fff',
   padding: '2rem',
   borderRadius: '10px',
-  width: '90%',
-  maxWidth: '90%',
-  marginLeft: '5%',
-  marginRight: '5%',
+  width: '95%',
+  maxWidth: '95%',
+  marginLeft: '2.5%',
+  marginRight: '2.5%',
   textAlign: 'left' as const,
   color: '#000',
+  boxSizing: 'border-box' as const,
 };
