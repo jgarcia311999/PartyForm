@@ -2,16 +2,11 @@ import { useState, useRef } from 'react';
 
 export default function FraseEditor() {
   const [texto, setTexto] = useState('');
-  const [tipoJuego, setTipoJuego] = useState('');
+  const [tipoJuego, setTipoJuego] = useState('Sin categoría');
   const [pantalla, setPantalla] = useState<'seleccion' | 'frase'>('frase');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalContent, setModalContent] = useState<string[]>([]);
-  const tiposConJugadores = [
-    '¡El Primero Que!',
-    'El Reloj Bomba',
-    '¿Quién crees que es mas probable que…?',
-  ];
   const textAreaRef = useRef<HTMLDivElement>(null);
 
   const insertarMarcador = (marcador: string) => {
@@ -19,7 +14,7 @@ export default function FraseEditor() {
     if (!el) return;
 
     if (marcador === '{Jugador}') {
-      const marcadorHTML = ` <span contenteditable="false" style="background:#FFD700; color:#000; padding:2px 6px; border-radius:8px; margin:0 2px; display:inline-block;">Jugador</span> `;
+      const marcadorHTML = `&nbsp;<span contenteditable="false" style="background:#FFD700; color:#000; padding:2px 6px; border-radius:8px; margin:0 2px; display:inline-block;">Jugador</span>&nbsp;`;
       // Insert HTML at cursor position in contenteditable div
       const selection = window.getSelection();
       if (!selection || !selection.rangeCount) return;
@@ -74,19 +69,14 @@ export default function FraseEditor() {
     setModalVisible(true);
   };
 
-  const mostrarEjemplosJugadores = () => {
-    alert(`Usa {Jugador1} y {Jugador2} para insertar jugadores:
-- {Jugador1} tiene que imitar a {Jugador2}
-- {Jugador2} le cuenta un secreto a {Jugador1}`);
-  };
 
   const enviar = async () => {
-    // Convert innerHTML to plain text, removing HTML tags
-    const el = textAreaRef.current;
-    let textoPlano = texto;
-    if (el) {
-      textoPlano = el.innerText || el.textContent || texto;
+    if (!tipoJuego || texto.trim().length < 10) {
+      alert('Por favor, selecciona un tipo de juego y escribe una frase con al menos 10 caracteres.');
+      return;
     }
+
+    const textoPlano = textAreaRef.current?.innerText || '';
 
     const payload = {
       "Marca temporal": new Date().toISOString(),
@@ -101,7 +91,12 @@ export default function FraseEditor() {
         body: JSON.stringify(payload),
       });
       const resultado = await res.text();
-      alert(res.ok ? 'Frase enviada con éxito' : `Error al enviar: ${resultado}`);
+      if (res.ok) {
+        alert('Frase enviada con éxito');
+        window.location.reload();
+      } else {
+        alert(`Error al enviar: ${resultado}`);
+      }
     } catch (err) {
       console.error(err);
       alert('Error de red');
@@ -119,8 +114,8 @@ export default function FraseEditor() {
         width: '100vw',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        paddingTop: '5vh',
-        padding: 8,
+        paddingTop: '2vh',
+        padding: 0,
         backgroundColor: '#f2f2f2',
       }}
     >
@@ -130,7 +125,7 @@ export default function FraseEditor() {
           borderRadius: '20px',
           width: '95%',
           maxWidth: 400,
-          padding: '2.5rem 1.5rem',
+          padding: '3rem 2rem',
           boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
           textAlign: 'center',
           color: '#000',
@@ -139,7 +134,7 @@ export default function FraseEditor() {
         <div
           style={{
             backgroundColor: '#FFD700',
-            padding: '2rem 1rem',
+            padding: '2.5rem 1rem 2rem 1rem',
             borderTopLeftRadius: '20px',
             borderTopRightRadius: '20px',
             borderBottomLeftRadius: '30px',
@@ -150,14 +145,14 @@ export default function FraseEditor() {
           }}
         >
           <h1 style={{
-            fontSize: '28px',
+            fontSize: '32px',
             margin: 0,
             fontWeight: 'bold',
             letterSpacing: '-0.5px',
           }}>
             Crear nueva frase
           </h1>
-          <p style={{ marginTop: '0.75rem', fontSize: '16px', opacity: 0.85 }}>
+          <p style={{ marginTop: '0.75rem', fontSize: '18px', opacity: 0.85 }}>
             Comparte tu creatividad
           </p>
         </div>
@@ -174,13 +169,6 @@ export default function FraseEditor() {
             }}
           >
             <div style={{ marginBottom: '1rem' }}>
-              {pantalla === 'frase' && tiposConJugadores.includes(tipoJuego) && (
-                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <button onClick={() => insertarMarcador('{Jugador1}')} style={{ fontSize: 14, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>+ Jugador 1</button>
-                  <button onClick={() => insertarMarcador('{Jugador2}')} style={{ fontSize: 14, padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>+ Jugador 2</button>
-                  <button onClick={mostrarEjemplosJugadores} style={{ ...btnInfoStyle, fontSize: 14, padding: '8px 12px', borderRadius: '6px', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>?</button>
-                </div>
-              )}
               <label style={{ fontSize: '16px', lineHeight: '20px' }}>Frase</label>
               <div
                 ref={textAreaRef}
@@ -191,9 +179,9 @@ export default function FraseEditor() {
                   width: '100%',
                   maxWidth: '100%',
                   margin: 0,
-                  height: 100,
+                  height: 120,
                   marginTop: 8,
-                  fontSize: 16,
+                  fontSize: 18,
                   lineHeight: '24px',
                   padding: '12px',
                   borderRadius: '10px',
@@ -207,11 +195,11 @@ export default function FraseEditor() {
               />
             </div>
             <div style={{ marginTop: '1rem', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button onClick={enviar} disabled={!tipoJuego || texto.trim() === ''} style={{ padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none', minWidth: 120 }}>Enviar frase</button>
-              <button onClick={() => insertarMarcador('{Jugador}')} style={{ marginLeft: '0.5rem', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none', minWidth: 120 }}>+ Jugador</button>
+              <button onClick={enviar} disabled={!tipoJuego || texto.trim() === ''} style={{ padding: 12, fontSize: 16, borderRadius: '30px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none', minWidth: 120 }}>Enviar frase</button>
+              <button onClick={() => insertarMarcador('{Jugador}')} style={{ marginLeft: '0.5rem', padding: 12, fontSize: 16, borderRadius: '30px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none', minWidth: 120 }}>+ Jugador</button>
             </div>
             <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-              <button onClick={() => setPantalla('seleccion')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>Cambiar tipo de frase</button>
+              <button onClick={() => setPantalla('seleccion')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: '30px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>Cambiar tipo de frase</button>
             </div>
           </div>
         )}
@@ -227,7 +215,7 @@ export default function FraseEditor() {
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {['¡El Primero Que!', 'El Reloj Bomba', 'En 7 segundos', 'Todos los que…', '¿Quién es mas probable que…?']
+              {['Sin categoría', '¡El Primero Que!', 'El Reloj Bomba', 'En 7 segundos', 'Todos los que…', '¿Quién es mas probable que…?']
                 .map((opcion) => (
                   <div
                     key={opcion}
@@ -265,13 +253,13 @@ export default function FraseEditor() {
             </div>
             {tipoJuego && (
               <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>Siguiente</button>
+                <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: '30px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>Siguiente</button>
               </div>
             )}
           </div>
           {pantalla === 'seleccion' && (
             <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-              <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: 8, cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>⬅ Atrás</button>
+              <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: '30px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>⬅ Atrás</button>
             </div>
           )}
         </div>
