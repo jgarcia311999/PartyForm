@@ -114,7 +114,7 @@ export default function FraseEditor() {
         width: '100dvw',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        paddingTop: '2vh',
+        margin: 0,
         padding: 0,
         backgroundColor: '#f2f2f2',
       }}
@@ -126,8 +126,7 @@ export default function FraseEditor() {
           width: '100%',
           height: '100%',
           padding: '1rem',
-          overflow: 'auto',
-          WebkitOverflowScrolling: 'touch',
+          overflow: 'hidden',
           textAlign: 'center',
           color: '#000',
           boxSizing: 'border-box',
