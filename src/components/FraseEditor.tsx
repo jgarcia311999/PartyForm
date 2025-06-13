@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 
 export default function FraseEditor() {
   const [texto, setTexto] = useState('');
-  const [tipoJuego, setTipoJuego] = useState('Sin categoría');
+  const [tipoJuego, setTipoJuego] = useState('A beber!!');
   const [pantalla, setPantalla] = useState<'seleccion' | 'frase'>('frase');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -214,9 +214,10 @@ export default function FraseEditor() {
       paddingBottom: 4,
       fontWeight: 'bold',
       fontSize: '16px',
-      color: '#000'
+      color: '#000',
+      textAlign: 'left'
     }}>
-      {tipoJuego || 'Sin categoría'}
+      {tipoJuego || 'A beber!!'}
     </div>
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '2rem', textAlign: 'center' }}>
       <div
@@ -348,7 +349,7 @@ export default function FraseEditor() {
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {['Sin categoría', '¡El Primero Que!', 'El Reloj Bomba', 'En 7 segundos', 'Todos los que…', '¿Quién es mas probable que…?']
+              {['A beber!!', '¡El Primero Que!', 'El Reloj Bomba', 'En 7 segundos', 'Todos los que…', '¿Quién es mas probable que…?']
                 .map((opcion) => (
                   <div
                     key={opcion}
