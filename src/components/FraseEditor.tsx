@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function FraseEditor() {
   const [texto, setTexto] = useState('');
@@ -14,15 +14,23 @@ export default function FraseEditor() {
     const el = textAreaRef.current;
     if (!el) return;
 
+    el.focus();
+    const selection = window.getSelection();
+    const range = selection && selection.rangeCount > 0
+      ? selection.getRangeAt(0)
+      : document.createRange();
+
+    if (!selection || !range) return;
+
+    if (!el.contains(range.startContainer)) {
+      range.selectNodeContents(el);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
     if (marcador === '{Jugador}') {
       const marcadorHTML = `&nbsp;<span contenteditable="false" style="background:#FFD700; color:#000; padding:2px 6px; border-radius:8px; margin:0 2px; display:inline-block;">Jugador</span>&nbsp;`;
-      // Insert HTML at cursor position in contenteditable div
-      const selection = window.getSelection();
-      if (!selection || !selection.rangeCount) return;
-
-      const range = selection.getRangeAt(0);
-      range.deleteContents();
-
       const tempEl = document.createElement('div');
       tempEl.innerHTML = marcadorHTML;
       const frag = document.createDocumentFragment();
@@ -30,31 +38,29 @@ export default function FraseEditor() {
       while ((node = tempEl.firstChild)) {
         frag.appendChild(node);
       }
+      range.deleteContents();
       range.insertNode(frag);
-
-      // Move cursor after inserted node
       range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);
-
-      // Update state with new innerHTML
-      setTexto(el.innerHTML);
     } else {
-      // For other markers, insert plain text
-      const selection = window.getSelection();
-      if (!selection || !selection.rangeCount) return;
-      const range = selection.getRangeAt(0);
-      range.deleteContents();
       const textNode = document.createTextNode(marcador);
+      range.deleteContents();
       range.insertNode(textNode);
-      range.setStartAfter(textNode);
-      range.setEndAfter(textNode);
+      range.collapse(false);
       selection.removeAllRanges();
       selection.addRange(range);
-      setTexto(el.innerHTML);
     }
-    el.focus();
+
+    setTexto(el.innerHTML);
   };
+
+  useEffect(() => {
+    const el = textAreaRef.current;
+    if (el && el.innerHTML !== texto) {
+      el.innerHTML = texto;
+    }
+  }, [pantalla]);
 
   const mostrarEjemplosTipoJuego = (tipo: string) => {
     const ejemplos: Record<string, string[]> = {
@@ -321,6 +327,26 @@ export default function FraseEditor() {
               overflow: 'hidden',
             }}
           >
+            {pantalla === 'seleccion' && (
+              <div style={{ marginBottom: '1rem', width: '100%', textAlign: 'left', paddingLeft: 0 }}>
+                <button
+                  onClick={() => setPantalla('frase')}
+                  style={{
+                    fontSize: 20,
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <span style={{ fontSize: 24 }}>←</span>
+                  <span>Volver</span>
+                </button>
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {['Sin categoría', '¡El Primero Que!', 'El Reloj Bomba', 'En 7 segundos', 'Todos los que…', '¿Quién es mas probable que…?']
                 .map((opcion) => (
@@ -358,17 +384,7 @@ export default function FraseEditor() {
                   </div>
                 ))}
             </div>
-            {tipoJuego && (
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: '30px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>Siguiente</button>
-              </div>
-            )}
           </div>
-          {pantalla === 'seleccion' && (
-            <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
-              <button onClick={() => setPantalla('frase')} style={{ width: '95%', padding: 12, fontSize: 16, borderRadius: '30px', cursor: 'pointer', backgroundColor: '#FFD700', color: '#000', border: 'none' }}>⬅ Atrás</button>
-            </div>
-          )}
         </div>
       </div>
       <Modal
